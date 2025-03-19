@@ -1,13 +1,13 @@
 import React from 'react';
 import leagueLogo from '../assets/leagueLogo.png';
 
-function Navbar({ handleResetDraft }) {
+const Navbar = ({ handleResetDraft }) => {
   return (
     <nav className='navbar'>
       <img
         src={leagueLogo}
         alt='League of Legends Logo'
-        className='logo'
+        className='h-24 p-6 will-change-auto hover:drop-shadow-xl'
       />
       <h1>League of Legends Draft</h1>
       <div className='reset-container'>
@@ -20,6 +20,6 @@ function Navbar({ handleResetDraft }) {
       </div>
     </nav>
   );
-}
+};
 
 export default Navbar;
