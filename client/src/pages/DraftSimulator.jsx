@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Navbar from '../components/Navbar';
 import SelectedChampions from '../components/SelectedChampions';
 import ChampionGrid from '../components/ChampionGrid';
@@ -46,7 +46,6 @@ export default function DraftSimulator() {
   const [redBans, setRedBans] = useState([]);
   const [blueTeam, setBlueTeam] = useState([]);
   const [redTeam, setRedTeam] = useState([]);
-  const [turnIndex, setTurnIndex] = useState(0);
   const [started, setStarted] = useState(false);
   const [phase, setPhase] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -54,13 +53,21 @@ export default function DraftSimulator() {
 
   const [selectedRole, setSelectedRole] = useState('All');
 
-  const [timer, setTimer] = useState(30);
+  const [timer, setTimer] = useState('30');
 
   const [search, setSearch] = useState('');
 
   const [selectedChampion, setSelectedChampion] = useState(null);
 
-  const isBanPhase = TURNS[turnIndex].action.toLowerCase().includes('ban');
+  const champRef = useRef(null);
+  const indexRef = useRef(0);
+  const isBanPhase = TURNS[indexRef.current].action
+    .toLowerCase()
+    .includes('ban')
+    ? true
+    : finished === true
+      ? false
+      : false;
 
   useEffect(() => {
     fetch(API_URL)
@@ -81,10 +88,11 @@ export default function DraftSimulator() {
   }, []);
 
   useEffect(() => {
-    setTimer(5); // Reset timer when turn changes
+    if (finished) {
+      return;
+    }
 
-    console.log(selectedChampion);
-
+    setTimer('10'); // Reset timer when turn changes
     const interval = setInterval(() => {
       setTimer((prevTime) => {
         if (prevTime === 1) {
@@ -95,24 +103,20 @@ export default function DraftSimulator() {
     }, 1000);
 
     return () => clearInterval(interval); // Cleanup on unmount or turn change
-  }, [turnIndex, started]);
+  }, [indexRef.current, started]);
 
   useEffect(() => {
-    if (timer === 0) {
+    while (loading) {
+      return;
+    }
+    if (timer === '0') {
       setTimeout(() => {
         if (selectedChampion) {
-          console.log(
-            'Timer expired with a selected champion, locking in:',
-            selectedChampion.name
-          );
           handleLockIn(); // Lock in the selected champion
         } else {
-          console.log(
-            'Timer expired with NO selected champion, auto-picking...'
-          );
           handleAutoPick(); // Auto-pick and lock in
         }
-      }, 5000); // 2-second timeout before switching turns
+      }, 2000); // 2-second timeout before switching turns
     }
   }, [timer]);
 
@@ -120,9 +124,23 @@ export default function DraftSimulator() {
     champ.name.toLowerCase().includes(search.toLowerCase())
   );
 
-  const handleAutoPick = () => {
-    console.log('AutoPick started, current selection:', selectedChampion?.name);
+  const handleEndTurn = () => {
+    console.log(indexRef.current + 1, TURNS.length);
+    console.log(indexRef.current + 1 < TURNS.length);
+    if (indexRef.current + 1 < TURNS.length) {
+      indexRef.current += 1;
+    } else if (indexRef.current + 1 === TURNS.length) {
+      console.log('end draft');
+      handleEndDraft();
+    } else {
+      setPhase(phase + 1);
+    }
 
+    setSelectedChampion(null);
+    champRef.current = null;
+  };
+
+  const handleAutoPick = () => {
     if (!selectedChampion) {
       const availableChamps = champions.filter(
         (champ) =>
@@ -137,48 +155,35 @@ export default function DraftSimulator() {
       const randomChamp =
         availableChamps[Math.floor(Math.random() * availableChamps.length)];
 
-      console.log('Auto-picked:', randomChamp.name);
-
-      setSelectedChampion(randomChamp);
-
-      // Ensure the selected champion is locked in immediately after setting state
-      setTimeout(() => {
-        handleLockIn(randomChamp);
-      }, 500);
-    } else {
-      handleLockIn(selectedChampion);
+      champRef.current = randomChamp;
     }
+    // Ensure the selected champion is locked in immediately after setting state
+    setTimeout(() => {
+      handleAutoLockIn();
+    }, 2000);
   };
 
-  const roleFilter = () => {
-    return (
-      <div className='role-filter'>
-        {ROLES.map((role) => (
-          <button
-            key={role}
-            onClick={() => setSelectedRole(role)}
-            className={`role-button ${selectedRole === role ? 'active' : ''}`}
-          >
-            {role}
-          </button>
-        ))}
-      </div>
-    );
+  const handleAutoLockIn = () => {
+    if (isBanPhase) {
+      if (TURNS[indexRef.current].team.toLowerCase() === 'blue') {
+        setBlueBans([...blueBans, champRef.current]);
+      } else {
+        setRedBans([...redBans, champRef.current]);
+      }
+    } else {
+      if (TURNS[indexRef.current].team.toLowerCase() === 'blue') {
+        setBlueTeam([...blueTeam, champRef.current]);
+      } else {
+        setRedTeam([...redTeam, champRef.current]);
+      }
+    }
+    handleEndTurn();
   };
 
   const handleStartDraft = () => {
-    setStarted(true);
-    setFinished(false);
-  };
-
-  const handleEndDraft = () => {
-    // setFinished(true);
-  };
-
-  const handleResetDraft = () => {
     setBlueTeam([]);
     setRedTeam([]);
-    setTurnIndex(0); // Reset turnIndex
+    indexRef.current = 0; // Reset indexRef
     setBlueBans([]); // Clear blue bans
     setRedBans([]); // Clear red bans
     setSelectedChampion(null); // Clear selected champion
@@ -186,93 +191,106 @@ export default function DraftSimulator() {
     setStarted(true); // Reset started to false
     setFinished(false); // Reset finished to false
     setSearch(''); // Clear search bar
-    setTimer(30); // Reset timer
+    setTimer('10'); // Reset timer
+  };
+
+  const handleResetDraft = () => {
+    setBlueTeam([]);
+    setRedTeam([]);
+    indexRef.current = 0; // Reset indexRef
+    setBlueBans([]); // Clear blue bans
+    setRedBans([]); // Clear red bans
+    setSelectedChampion(null); // Clear selected champion
+    setPhase('ban'); // Reset phase to ban
+    setStarted(true); // Reset started to false
+    setFinished(false); // Reset finished to false
+    setSearch(''); // Clear search bar
+    setTimer('10'); // Reset timer
+  };
+
+  const handleEndDraft = () => {
+    setFinished(true);
+    setTimer('done');
   };
 
   const handleLockIn = () => {
-    if (!selectedChampion) return;
-
     if (isBanPhase) {
-      if (TURNS[turnIndex].team.toLowerCase() === 'blue') {
+      if (TURNS[indexRef.current].team.toLowerCase() === 'blue') {
         setBlueBans([...blueBans, selectedChampion]);
       } else {
         setRedBans([...redBans, selectedChampion]);
       }
     } else {
-      if (TURNS[turnIndex].team.toLowerCase() === 'blue') {
-        console.log(selectedChampion);
+      if (TURNS[indexRef.current].team.toLowerCase() === 'blue') {
         setBlueTeam([...blueTeam, selectedChampion]);
       } else {
-        console.log(selectedChampion);
         setRedTeam([...redTeam, selectedChampion]);
       }
     }
-
-    if (turnIndex + 1 < TURNS.length) {
-      setTurnIndex(turnIndex + 1);
-    } else {
-      setTurnIndex(0);
-      setPhase(phase + 1);
-    }
-
-    if (blueTeam.length == 5 && redTeam.length == 5) {
-      handleEndDraft();
-    }
-
-    setSelectedChampion(null);
-    setTurnIndex(turnIndex + 1);
+    handleEndTurn();
   };
 
   return (
     <div>
-      <Navbar handleResetDraft={handleResetDraft} />
-      {!started ? (
-        <div className='start-container'>
-          <button
-            className='start-button'
-            onClick={handleStartDraft}
-          >
-            Start Draft
-          </button>
-        </div>
-      ) : (
-        <div className='draft-container'>
-          <div className='ban-container'>
+      <Navbar
+        handleResetDraft={handleResetDraft}
+        handleStartDraft={handleStartDraft}
+        started={started}
+      />
+      {started && (
+        <div className='flex flex-col justify-between'>
+          <div className='flex w-full justify-between flex-row gap-2.5'>
             <BannedChampions
               team={'blue'}
               bans={blueBans}
               turns={TURNS}
-              turnIndex={turnIndex}
+              turnIndex={indexRef.current}
               isBanPhase={isBanPhase}
+              selectedChampion={
+                TURNS[indexRef.current].team.toLowerCase() === 'blue' &&
+                isBanPhase
+                  ? selectedChampion
+                  : null
+              }
             />
-            <div className='flex justify-end flex-col'>
-              <div className='font-bold text-4xl'>
-                <h2>{timer}</h2>
-              </div>
+            <div className='flex justify-between flex-col'>
+              <h2 className='font-bold text-4xl'>{timer}</h2>
               <input
                 type='text'
                 placeholder='Search...'
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className='search-bar'
+                className='flex gap-2.5 self-end mb-2.5 bg-black/50 border-none rounded-tr-md text-center h-7 '
               />
             </div>
             <BannedChampions
               team={'red'}
               bans={redBans}
               turns={TURNS}
-              turnIndex={turnIndex}
+              turnIndex={indexRef.current}
               isBanPhase={isBanPhase}
+              selectedChampion={
+                TURNS[indexRef.current].team.toLowerCase() === 'red' &&
+                isBanPhase
+                  ? selectedChampion
+                  : null
+              }
             />
           </div>
-          <div className='phase-container'>
-            <div className='blue-side'>
+          <div className='flex flex-row justify-between'>
+            <div className='flex flex-col w-60 gap-2.5 m-2.5 h-fit sticky items-start'>
               <SelectedChampions
                 team='blue'
                 champions={blueTeam}
                 turns={TURNS}
-                turnIndex={turnIndex}
+                turnIndex={indexRef.current}
                 isPickPhase={!isBanPhase}
+                selectedChampion={
+                  TURNS[indexRef.current].team.toLowerCase() === 'blue' &&
+                  !isBanPhase
+                    ? selectedChampion
+                    : null
+                }
               />
             </div>
 
@@ -284,6 +302,7 @@ export default function DraftSimulator() {
                   <ChampionGrid
                     champions={champions}
                     setSelectedChampion={setSelectedChampion}
+                    champRef={champRef}
                     selectedChampions={[...blueTeam, ...redTeam]}
                     bannedChampions={[...blueBans, ...redBans]}
                     filteredChampions={filteredChampions}
@@ -293,30 +312,35 @@ export default function DraftSimulator() {
                 </>
               )}
             </div>
-            <div className='red-side'>
+            <div className='flex flex-col w-60 gap-2.5 m-2.5 h-fit sticky items-end'>
               <SelectedChampions
                 team='red'
                 champions={redTeam}
                 turns={TURNS}
-                turnIndex={turnIndex}
+                turnIndex={indexRef.current}
                 isPickPhase={!isBanPhase}
+                selectedChampion={
+                  TURNS[indexRef.current].team.toLowerCase() === 'red' &&
+                  !isBanPhase
+                    ? selectedChampion
+                    : null
+                }
               />
             </div>
-            {/* Lock In Button - Appears when a champion is selected */}
-
             {selectedChampion && (
-              <div className='lock-in-container'>
+              <div>
                 <button
-                  className='lock-in-button'
+                  className='fixed bottom-5 left-1/2 -translate-x-1/2 bg-[#ffffff] p-2.5 px-10 w-52 h-13 text-2xl rounded-b-md cursor-pointer transition hover:scale-110'
                   onClick={handleLockIn}
                 >
-                  {TURNS[turnIndex].action.toLowerCase().includes('ban')
+                  {TURNS[indexRef.current].action.toLowerCase().includes('ban')
                     ? 'Ban'
                     : 'Pick'}{' '}
                   {selectedChampion.name}
                 </button>
               </div>
             )}
+            <button onClick={handleEndDraft}></button>
           </div>
         </div>
       )}

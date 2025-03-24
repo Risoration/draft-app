@@ -1,23 +1,23 @@
 import React from 'react';
 import leagueLogo from '../assets/leagueLogo.png';
 
-const Navbar = ({ handleResetDraft }) => {
+const Navbar = ({ handleResetDraft, handleStartDraft, started }) => {
   return (
-    <nav className='navbar'>
+    <nav className='flex justify-between items-center flex-row p-4 w-full h-16'>
       <img
         src={leagueLogo}
         alt='League of Legends Logo'
         className='h-24 p-6 will-change-auto hover:drop-shadow-xl'
       />
-      <h1>League of Legends Draft</h1>
-      <div className='reset-container'>
+      {!started && (
         <button
-          className='reset-button'
-          onClick={handleResetDraft}
+          onClick={handleStartDraft}
+          className='flex justify-center flex-row'
         >
-          Reset Draft
+          Start Draft
         </button>
-      </div>
+      )}
+      <button onClick={handleResetDraft}>Reset Draft</button>
     </nav>
   );
 };

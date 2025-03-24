@@ -7,6 +7,7 @@ function ChampionGrid({
   selectedChampions,
   bannedChampions,
   filteredChampions,
+  champRef,
   finished,
 }) {
   const searchedChampions = champions.filter((champ) => {
@@ -23,9 +24,10 @@ function ChampionGrid({
 
           return (
             <button
+              ref={champRef}
               key={champ.name}
-              onClick={() => !isDisabled && setSelectedChampion(champ)}
-              className={`champion-button bg-transparent border-none cursor-pointer transition-transform duration-200 ease-in-out hover:scale-110 ${
+              onClick={() => setSelectedChampion(champ)}
+              className={`champion-button bg-transparent border-none cursor-pointer transition-transform duration-200 ease-in-out hover:scale-108 ${
                 isDisabled
                   ? `grayscale-100 brightness-75 scale-95 pointer-events-none opacity-75`
                   : ''
