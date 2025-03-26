@@ -3,19 +3,10 @@ import Navbar from '../components/Navbar';
 import SelectedChampions from '../components/SelectedChampions';
 import ChampionGrid from '../components/ChampionGrid';
 import BannedChampions from '../components/BannedChampions';
+import Filterbar from '../components/Filterbar';
 
 const API_URL =
   'https://ddragon.leagueoflegends.com/cdn/15.5.1/data/en_US/champion.json';
-
-const ROLES = [
-  'All',
-  'Fighter',
-  'Mage',
-  'Assassin',
-  'Tank',
-  'Support',
-  'Marksman',
-];
 
 const TURNS = [
   { team: 'blue', action: 'Ban 1' },
@@ -109,7 +100,7 @@ export default function DraftSimulator() {
     while (loading) {
       return;
     }
-    if (timer === '0') {
+    if (timer === 0) {
       setTimeout(() => {
         if (selectedChampion) {
           handleLockIn(); // Lock in the selected champion
@@ -119,10 +110,6 @@ export default function DraftSimulator() {
       }, 2000); // 2-second timeout before switching turns
     }
   }, [timer]);
-
-  const filteredChampions = champions.filter((champ) =>
-    champ.name.toLowerCase().includes(search.toLowerCase())
-  );
 
   const handleEndTurn = () => {
     console.log(indexRef.current + 1, TURNS.length);
@@ -158,12 +145,11 @@ export default function DraftSimulator() {
       champRef.current = randomChamp;
     }
     // Ensure the selected champion is locked in immediately after setting state
-    setTimeout(() => {
-      handleAutoLockIn();
-    }, 2000);
+    handleAutoLockIn();
   };
 
   const handleAutoLockIn = () => {
+    console.log(champRef.current);
     if (isBanPhase) {
       if (TURNS[indexRef.current].team.toLowerCase() === 'blue') {
         setBlueBans([...blueBans, champRef.current]);
@@ -210,7 +196,7 @@ export default function DraftSimulator() {
 
   const handleEndDraft = () => {
     setFinished(true);
-    setTimer('done');
+    setTimer('Finished');
   };
 
   const handleLockIn = () => {
@@ -255,13 +241,7 @@ export default function DraftSimulator() {
             />
             <div className='flex justify-between flex-col'>
               <h2 className='font-bold text-4xl'>{timer}</h2>
-              <input
-                type='text'
-                placeholder='Search...'
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className='flex gap-2.5 self-end mb-2.5 bg-black/50 border-none rounded-tr-md text-center h-7 '
-              />
+              <Filterbar search={search} setSearch={setSearch} />
             </div>
             <BannedChampions
               team={'red'}
@@ -305,7 +285,8 @@ export default function DraftSimulator() {
                     champRef={champRef}
                     selectedChampions={[...blueTeam, ...redTeam]}
                     bannedChampions={[...blueBans, ...redBans]}
-                    filteredChampions={filteredChampions}
+                    search={search}
+                    setSearch={setSearch}
                     finished={finished}
                     selectedRole={selectedRole}
                   />

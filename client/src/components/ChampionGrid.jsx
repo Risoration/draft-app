@@ -6,7 +6,6 @@ function ChampionGrid({
   setSelectedChampion,
   selectedChampions,
   bannedChampions,
-  filteredChampions,
   champRef,
   finished,
 }) {
@@ -14,9 +13,13 @@ function ChampionGrid({
     selectedRole === 'All' || champ.roles.includes(selectedRole);
   });
 
+  const filteredChampions = champions.filter((champ) =>
+    champ.name.toLowerCase().includes(search.toLowerCase())
+  );
+
   return (
     <>
-      <div className='grid grid-cols-6 w-full max-w-screen-lg max-h-180 overflow-y-scroll'>
+      <div className='grid grid-cols-6 w-full max-w-screen-lg max-h-180 overflow-y-scroll justify-center'>
         {filteredChampions.map((champ) => {
           const isDisabled =
             selectedChampions.includes(champ) ||
