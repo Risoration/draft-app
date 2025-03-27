@@ -6,13 +6,10 @@ function ChampionGrid({
   setSelectedChampion,
   selectedChampions,
   bannedChampions,
+  search,
   champRef,
   finished,
 }) {
-  const searchedChampions = champions.filter((champ) => {
-    selectedRole === 'All' || champ.roles.includes(selectedRole);
-  });
-
   const filteredChampions = champions.filter((champ) =>
     champ.name.toLowerCase().includes(search.toLowerCase())
   );

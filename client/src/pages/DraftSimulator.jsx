@@ -241,7 +241,10 @@ export default function DraftSimulator() {
             />
             <div className='flex justify-between flex-col'>
               <h2 className='font-bold text-4xl'>{timer}</h2>
-              <Filterbar search={search} setSearch={setSearch} />
+              <Filterbar
+                search={search}
+                setSearch={setSearch}
+              />
             </div>
             <BannedChampions
               team={'red'}
@@ -321,7 +324,6 @@ export default function DraftSimulator() {
                 </button>
               </div>
             )}
-            <button onClick={handleEndDraft}></button>
           </div>
         </div>
       )}

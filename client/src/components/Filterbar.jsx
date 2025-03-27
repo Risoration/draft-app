@@ -11,8 +11,6 @@ const ROLES = [
   'Marksman',
 ];
 
-const [selectedRole, setSelectedRole] = useState('All');
-
 const RoleFilter = ({ selectedRole, setSelectedRole }) => {
   return (
     <div className=''>
