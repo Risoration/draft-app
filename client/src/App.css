@@ -6,6 +6,11 @@
   width: 100%;
 }
 
+#body {
+  overflow: hidden;
+  overflow-x: hidden;
+}
+
 h1 {
   justify-self: center;
 }

@@ -28,7 +28,7 @@ const SelectedChampions = ({
           return (
             <div
               key={index}
-              className={`flex justify-center rounded-lg w-24 h-24 bg-black/30 ${index === nextSlotIndex && isActiveTurn && pickTeam === team ? (pickTeam === 'blue' ? 'border-blue-600/50 border-4' : 'border-red-600 border-4') : 'border-gray-500'}`}
+              className={`flex justify-center rounded-lg w-24 h-24 bg-black/30 ${index === nextSlotIndex && isActiveTurn && pickTeam === team ? (pickTeam === 'blue' ? 'border-blue-600/50 border-4 animate-pulse' : 'border-red-600 border-4 animate-spin') : 'border-gray-500'}`}
             >
               {champion ? (
                 <img
