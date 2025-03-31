@@ -6,7 +6,7 @@ import BannedChampions from '../components/BannedChampions';
 import Filterbar from '../components/Filterbar';
 
 const API_URL =
-  'https://ddragon.leagueoflegends.com/cdn/15.6`.1/data/en_US/champion.json';
+  'https://ddragon.leagueoflegends.com/cdn/15.6.1/data/en_US/champion.json';
 
 const TURNS = [
   { team: 'blue', action: 'Ban 1' },
@@ -66,7 +66,7 @@ export default function DraftSimulator() {
       .then((data) => {
         const champs = Object.values(data.data).map((champ) => ({
           name: champ.name,
-          image: `https://ddragon.leagueoflegends.com/cdn/15.5.1/img/champion/${champ.image.full}`,
+          image: `https://ddragon.leagueoflegends.com/cdn/15.6.1/img/champion/${champ.image.full}`,
           roles: champ.tags,
         }));
         setChampions(champs);
